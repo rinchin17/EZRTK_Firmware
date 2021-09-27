@@ -64,6 +64,7 @@ OneButton button(15, true);
 TinyGPSPlus gps;
 TinyGPSCustom dt(gps, "GNRMC", 9);
 TinyGPSCustom fix(gps, "GNGSA", 2);
+TinyGPSCustom fixStat(gps, "GPGGA", 6);
 
 // Function declarations
 void SD_Card_Setup();
@@ -632,19 +633,19 @@ void parser()
   {
     if(command.equals("$EZ_RTK,SET-MODE,ROVER\n") || command.equals("$EZ_RTK,SET-MODE,ROVER"))
     {
-      RoverSetup();
+//      RoverSetup();
       writeMode(1);
       Serial.println("Thanks for using EZ_RTK, your RTK has been configured as a ROVER ");
-      command="";
+      command = "";
 
     }
     
     else if(command.equals("$EZ_RTK,SET-MODE,BASE\n") || command.equals("$EZ_RTK,SET-MODE,BASE"))
     {
       Serial.println("Thanks for using EZ_RTK, your RTK has been configured as a BASE");
-      command="";
-      winflag9=1;//variable to wake the window in void loop
+      command = "";
       writeMode(0);
+      winflag9=1;//variable to wake the window in void loop
 //      BaseSetup();
     }
     
@@ -681,7 +682,6 @@ void writeMode(int newMode)
   if(myFile2)
   {
     myFile2.write(newMode);
-//    device_mode = newMode;
     Serial.println("ConfigFile created");
   }
   else
@@ -703,12 +703,51 @@ void window1() //sattelite window
   
   display.print("\n FIX : ");
 
-  if(atoi(fix.value()) == 0)
-    display.print("Fix Unavailabe");  
-  else if(atoi(fix.value()) == 2)
-    display.print("2D Fix");
-  else if(atoi(fix.value()) == 3)
-    display.print("3D Fix");
+//  if(atoi(fix.value()) == 0)
+//    display.print("Fix Unavailabe");  
+//  else if(atoi(fix.value()) == 2)
+//    display.print("2D Fix");
+//  else if(atoi(fix.value()) == 3)
+//    display.print("3D Fix");
+
+  if (fixStat.isUpdated())
+  {
+    int fixStatInt = atoi(fixStat.value());
+  
+    switch (fixStatInt)
+    {
+    case 0:
+      display.print("Fix Unavailabe");  
+      break;
+    case 1:
+      display.print("SPS");
+      break;
+    case 2:
+      display.print("DGPS");
+      break;
+    case 3:
+      display.print("PPS");
+      break;
+    case 4:
+      display.print("RTK");
+      break;
+    case 5:
+      display.print("FLOAT");
+      break;
+    case 6:
+      display.print("Est");
+      break;
+    case 7:
+      display.print("Manual");
+      break;
+    case 8:
+      display.print("Simul");
+      break;
+    default:
+      display.print("N/A");
+      break;
+    }
+  }
       
   display.print("\n LAT : ");
   display.println(gps.location.lat(), 6);
