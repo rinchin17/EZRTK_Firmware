@@ -46,7 +46,7 @@ int winflag8=0;
 int winflag9=0;
 int winflag10=0;
 
-char* ssid = "EZ_RTK";
+char* ssid = "EZ_RTK_ROVER";
 char* password = "1234567890";
 char ssid1[30], password1[30];
 
@@ -234,19 +234,19 @@ String commandPallete(String command){
     
     Serial.println("Thanks for using EZ_RTK, your settings for Wifi has been configured as follows:\nSSID :"+String(ssid1)+"."+"\nPassword :"+String(password1)+".");
     Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println("'"+String(ssid1)+"'");
     
     if (WiFi.status() == WL_CONNECTED)
     {
       Serial.println("Wifi already connected");
       WiFi.disconnect();
+      delay(2000);
     }
 
     while (WiFi.status() != WL_CONNECTED) 
     {
+      Serial.println("'"+String(ssid1)+"'");
       WiFi.begin(ssid1, password1);
-      delay(1000);
+      delay(100);
       timer++;
 
       Serial.print(".");
@@ -268,7 +268,7 @@ String commandPallete(String command){
       WiFiIp = IpAddress2String(WiFi.localIP());
       ipReturned = 1;
       
-//      winflag10=1;  //variable to wake the window in void loop
+      winflag10=1;  //variable to wake the window in void loop
       
       hostServer();
       Serial.println("Server hosted");
@@ -311,7 +311,10 @@ void setup() {
   }
 
   readMode();
-
+  
+  display.setTextColor(WHITE);
+  display.clearDisplay();
+  
   if(device_mode == 1){
     RoverSetup();
   }
@@ -337,10 +340,6 @@ void setup() {
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
-  
-  
-  display.setTextColor(WHITE);
-  display.clearDisplay();
   
   hostServer();
   
@@ -405,6 +404,11 @@ void loop() {
   }
   else if(device_mode==0){
     globe="";
+    if(RTK.available()>0){
+      temp = RTK.read();
+      Serial.print((char)temp);
+      LoRa.write(temp);
+    }
   }
 
   parser();  
@@ -437,7 +441,6 @@ void SD_Card_Setup()
 
 void createJsonFile()
 {
-  //fileName = filename.toString();//String(gps.time.value())+"_"+String(gps.date.value())+"_UTC_Time_zone.txt";
   fileName="/EZ_RTK_"+String(dt.value())+"_"+String(gps.time.value())+".json";
   Serial.println("Surveying session STARTED!\n");
   winflag6=1;  //variable to wake the window in for loop
@@ -504,12 +507,7 @@ void singleclick()                                  // what happens when the but
   if (flag>=3)
   {
     flag=0;
-  }   
-
-  else{
-    Serial.println("Device is in BASE mode, so push button is not functional. ");
-  }
-                                
+  }                                 
 }
  
 void longclick()                                    // what happens when button is long-pressed
@@ -633,20 +631,22 @@ void parser()
   {
     if(command.equals("$EZ_RTK,SET-MODE,ROVER\n") || command.equals("$EZ_RTK,SET-MODE,ROVER"))
     {
-//      RoverSetup();
       writeMode(1);
+      flag = 30;
       Serial.println("Thanks for using EZ_RTK, your RTK has been configured as a ROVER ");
+      window12();
       command = "";
-
     }
     
     else if(command.equals("$EZ_RTK,SET-MODE,BASE\n") || command.equals("$EZ_RTK,SET-MODE,BASE"))
     {
       Serial.println("Thanks for using EZ_RTK, your RTK has been configured as a BASE");
-      command = "";
+      flag = 30;
       writeMode(0);
       winflag9=1;//variable to wake the window in void loop
-//      BaseSetup();
+      window13();
+      winflag9=0;
+      command = "";
     }
     
     else if(command.equals("$EZ_RTK,GNSS-VIEWER,RTKCOMMAND\n") || command.equals("$EZ_RTK,GNSS-VIEWER,RTKCOMMAND"))
@@ -720,7 +720,7 @@ void window1() //sattelite window
       display.print("Fix Unavailabe");  
       break;
     case 1:
-      display.print("SPS");
+      display.print("SPS, 3D");
       break;
     case 2:
       display.print("DGPS");
@@ -886,6 +886,40 @@ void window11() //for gnss viewer command window
   display.display();
 }
 
+void window12()   //  
+{
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.setTextSize(1);
+
+  display.println("      RESET NEEDED\n");
+  display.setTextSize(1);
+  
+  display.println("  Mode Set as ROVER");
+  display.println("  Please restart your");
+  display.println("  device to get it");
+  display.print("  into effect.");
+
+  display.display();
+}
+
+void window13()   //  
+{
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.setTextSize(1);
+
+  display.println("      RESET NEEDED\n");
+  display.setTextSize(1);
+    
+  display.println("  Mode Set as BASE");
+  display.println("  Please restart your");
+  display.println("  device to get it");
+  display.print("  into effect.");
+
+
+  display.display();
+}
 void BaseSetup()
 {
   window9();
