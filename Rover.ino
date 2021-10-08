@@ -20,6 +20,7 @@ String str1="";
 // For Ip storage
 String WiFiIp = "";
 String hotspotrecv="";
+String hotspotssid;
 
 const unsigned long eventInterval = 2000;
 const unsigned long wifiInterval = 7000;
@@ -46,7 +47,12 @@ int winflag8=0;
 int winflag9=0;
 int winflag10=0;
 
-char* ssid = "EZ_RTK_ROVER";
+char* ssid;
+//char* ssid= (char *)malloc(sizeof(char)*8);
+//*(str+0) = 'G'; 
+//  *(str+1) = 'f';  
+//  *(str+2) = 'G';
+//  *(str+3) = '\0';  
 char* password = "1234567890";
 char ssid1[30], password1[30];
 
@@ -239,22 +245,23 @@ String commandPallete(String command){
     {
       Serial.println("Wifi already connected");
       WiFi.disconnect();
-      delay(2000);
+      delay(100);
     }
 
     while (WiFi.status() != WL_CONNECTED) 
     {
       Serial.println("'"+String(ssid1)+"'");
       WiFi.begin(ssid1, password1);
-      delay(100);
+      delay(1000);
       timer++;
 
       Serial.print(".");
       
-      if (timer==15 && WiFi.status() != WL_CONNECTED)  //try reconnecting wifi for consecutively 10 attempts, 10 seconds in total
+      if (timer==4)  //try reconnecting wifi for consecutively 5 attempts, 5 seconds in total
       {
         Serial.println("\nTimeout no, wifi connected!\n\n");
         timer=0;
+        String("").toCharArray(ssid1, String("").length()+1);;
         break;
       }
     }
@@ -269,7 +276,6 @@ String commandPallete(String command){
       ipReturned = 1;
       
       winflag10=1;  //variable to wake the window in void loop
-      
       hostServer();
       Serial.println("Server hosted");
       Serial.println();
@@ -416,7 +422,7 @@ void loop() {
 
 void SD_Card_Setup()
 {
-   while (!Serial);
+  while (!Serial);
 
   Serial.println("Initializing SD card...");
 
@@ -582,13 +588,18 @@ void hostServer()
     WiFiIp = commandPallete(hotspotrecv);
     
     Serial.println("ipReturned = "+String(ipReturned));
+
+    if(ipReturned == 0){
+        request->send(200, "text/plain", "Incorrect Wi-FI Credentials. Please Check!");
+    }
     
-    while(ipReturned == 1){
+    else if(ipReturned == 1){
       ipReturned = 0;
       Serial.println("got ip: "+WiFiIp);
       request->send(200, "text/plain", WiFiIp);
       WiFiIp = "";    
     }
+    
   });
 
   server.on("/init", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -674,6 +685,23 @@ void readMode()
   File myFile1 = SD.open("/ConfigMode.txt", FILE_READ);
   device_mode = (int)(myFile1.read());
   myFile1.close();
+
+  File hotspotFile = SD.open("/HotspotCreds.txt", FILE_READ);
+  
+  while(hotspotFile.available()){ff
+    hotspotssid += (char)hotspotFile.read();
+  }
+  
+  int j = hotspotssid.length()+1;
+  ssid = (char *)malloc(sizeof(char)*j);
+
+  for(int i = 0; i<hotspotssid.length(); i++)
+    *(ssid+i) = (char)hotspotssid[i];
+  
+  *(ssid+(j-1)) = '\0';
+  hotspotFile.close();
+  
+  Serial.println("Hotspot ssid = "+String(ssid));
 }
 
 void writeMode(int newMode)
