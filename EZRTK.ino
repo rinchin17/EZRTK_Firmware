@@ -1,3 +1,4 @@
+// Removing comment: dev -> main push
 #include <WiFi.h>
 #include "ESPAsyncWebServer.h"
 #include <HardwareSerial.h>
@@ -48,11 +49,6 @@ int winflag9=0;
 int winflag10=0;
 
 char* ssid;
-//char* ssid= (char *)malloc(sizeof(char)*8);
-//*(str+0) = 'G'; 
-//  *(str+1) = 'f';  
-//  *(str+2) = 'G';
-//  *(str+3) = '\0';  
 char* password = "1234567890";
 char ssid1[30], password1[30];
 
@@ -292,8 +288,6 @@ String commandPallete(String command){
 void setup() {
   Serial.begin(115200);
 
-  SD_Card_Setup();
-
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.clearDisplay();
 
@@ -315,11 +309,13 @@ void setup() {
     delay(1400);
     display.display();
   }
-
-  readMode();
   
   display.setTextColor(WHITE);
   display.clearDisplay();
+  
+  SD_Card_Setup();
+
+  readMode();
   
   if(device_mode == 1){
     RoverSetup();
@@ -327,16 +323,6 @@ void setup() {
   else if(device_mode == 0){
     BaseSetup();
   }
-//  if (readMode()==true){
-//    device_mode = 1;
-//    ssid = "EZRTK_ROVER";
-//    RoverSetup();
-//  }
-//  else if(readMode()==false){
-//    device_mode = 0;
-//    ssid = "EZRTK_BASE";
-//    BaseSetup();
-//  }
 
   WiFi.mode(WIFI_MODE_APSTA);
   Serial.println("Setting AP However you can connect as Station as well…");
@@ -357,11 +343,6 @@ void loop() {
   button.tick();
 
   unsigned long wificurrentTime = millis();
-  
-//  if(wificurrentTime - wifipreviousTime >= wifiInterval){
-//    device_mode = readMode();   
-//    wifipreviousTime = wificurrentTime;
-//  }
   
   if(device_mode==1){
 
@@ -433,6 +414,21 @@ void SD_Card_Setup()
     Serial.println("2. is your wiring correct?");
     Serial.println("3. did you change the chipSelect pin to match your shield or module?");
     Serial.println("Note: press reset or reopen this serial monitor after fixing your issue!");
+
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display.setTextSize(1);
+  
+    display.println("      CHECK SD CARD\n");
+    display.setTextSize(1);
+
+    display.println("  Failed to mount");
+    display.println("  Memory device.");
+    display.println("  Please check");
+    display.println("  SD Card and");
+    display.println("  restart the device.");
+    
+    display.display();
     while (true);
   }
   Serial.println("SD card initialised!");
@@ -688,7 +684,7 @@ void readMode()
 
   File hotspotFile = SD.open("/HotspotCreds.txt", FILE_READ);
   
-  while(hotspotFile.available()){ff
+  while(hotspotFile.available()){
     hotspotssid += (char)hotspotFile.read();
   }
   
@@ -730,13 +726,6 @@ void window1() //sattelite window
   display.setTextSize(1);
   
   display.print("\n FIX : ");
-
-//  if(atoi(fix.value()) == 0)
-//    display.print("Fix Unavailabe");  
-//  else if(atoi(fix.value()) == 2)
-//    display.print("2D Fix");
-//  else if(atoi(fix.value()) == 3)
-//    display.print("3D Fix");
 
   if (fixStat.isUpdated())
   {
