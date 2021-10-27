@@ -1,5 +1,7 @@
 #include <WiFi.h>
+#include <AsyncTCP.h>
 #include "ESPAsyncWebServer.h"
+#include <AsyncElegantOTA.h>
 #include <HardwareSerial.h>
 #include "FS.h"
 #include <SD.h>
@@ -538,6 +540,7 @@ void longclick()                                    // what happens when button 
 
 void hostServer()
 {
+  AsyncElegantOTA.begin(&server);
   server.begin();
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
   {
